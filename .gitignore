@@ -1,0 +1,4 @@
+/target
+/.vscode
+list.json
+Cargo.lock
