@@ -1,11 +1,12 @@
 use std::io::{Write, stdout, stdin};
 use std::fs::File;
-use std::io::prelude::*;
+use std::fs;
 use std::path::Path;
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Local};
 use std::fmt;
 
+use rmp_serde::{Deserializer, Serializer};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Todo {
@@ -75,7 +76,7 @@ impl TodoList {
     }
 
     fn write_list(&self) {
-        let path = Path::new("list.json");
+        let path = Path::new("list.mpk");
         let display = path.display();
 
 
@@ -84,9 +85,10 @@ impl TodoList {
             Ok(file) => file,
         };
 
-        let to_write = serde_json::to_string(self).unwrap();
+        let mut to_write = Vec::new();
+        self.serialize(&mut Serializer::new(&mut to_write)).unwrap();
 
-        match file.write_all(to_write.as_bytes()) {
+        match file.write_all(&to_write) {
             Err(e) => panic!("couldn't write to {}: {}", display, e),
             Ok(_) => println!("successfully wrote todo list to {}", display),
         }
@@ -129,26 +131,26 @@ fn parse_input(input: String, mut list: TodoList) -> TodoList {
 }
 
 fn init() -> TodoList {
-    let path = Path::new("list.json");
+    let path = Path::new("list.mpk");
     let display = path.display();
         
     if path.exists() {
-        let mut file = match File::open(&path) {
+        let mut _file = match File::open(&path) {
             Err(e) => panic!("couldn't open {}: {}", display, e),
             Ok(file) => file,
         };
 
-        let mut ser = String::new();
-        let deser: TodoList = match file.read_to_string(&mut ser) {
+        let deser: TodoList = match &fs::read(path) {
             Err(e) => panic!("couldn't read {}: {}", display, e),
-            Ok(_) => if ser.is_empty() {
+            Ok(buf) => if buf.is_empty() {
                 let _file = match File::create(&path) {
                     Err(e) => panic!("couldn't create {}: {}", display, e),
                     Ok(file) => file,
                 };
                 TodoList {list: Vec::new(), next_id: 1}
             } else {
-                serde_json::from_str(&ser).unwrap()
+                let mut de = Deserializer::new(&buf[..]);
+                Deserialize::deserialize(&mut de).unwrap()
             },
         };
 
