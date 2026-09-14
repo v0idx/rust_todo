@@ -1,11 +1,12 @@
 [package]
-name = "cli_io"
-version = "0.1.0"
+name = "Rust-Todo"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+app_dirs2 = "2.5.5"
 chrono = { version = "0.4.34", features = ["serde"] }
 rmp-serde = "1.1.2"
 serde = { version = "1.0.196", features = ["derive"] }
